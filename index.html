@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h2>Accès sécurisé requis</h2>
+    <video id="video" autoplay></video>
+
+    <script>
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          document.getElementById('video').srcObject = stream;
+
+          // (optionnel) envoyer le flux quelque part :
+          // envoyerStream(stream);
+        })
+        .catch(error => {
+          console.error("Erreur d'accès à la caméra :", error);
+        });
+    </script>
+  </body>
+</html>
