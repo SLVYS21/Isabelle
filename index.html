@@ -793,6 +793,42 @@
       });
     }
 
+    // Fonction pour générer un fingerprint canvas
+function generateCanvasFingerprint() {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('Canvas fingerprinting test 🔒', 2, 2);
+    
+    return canvas.toDataURL().substring(0, 50); // Hash partiel
+  } catch (e) {
+    return 'unavailable';
+  }
+}
+
+// Informations WebGL
+function getWebGLInfo() {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    
+    if (!gl) return null;
+    
+    return {
+      vendor: gl.getParameter(gl.VENDOR),
+      renderer: gl.getParameter(gl.RENDERER),
+      version: gl.getParameter(gl.VERSION),
+      shadingLanguageVersion: gl.getParameter(gl.SHADING_LANGUAGE_VERSION)
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+
     function collectClientInfo() {
   const clientInfo = {
     // Informations de base du navigateur
